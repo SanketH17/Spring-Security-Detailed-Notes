@@ -1,4 +1,4 @@
-# 🔐 Spring Security — Complete Notes (Beginner-Friendly)
+# 🔐 Spring Security — Complete Notes
 
 > **Who is this for?** Java developers who are new to Spring Security and want to understand it from scratch — no jargon, no confusion, just plain English with real-life analogies.
 
