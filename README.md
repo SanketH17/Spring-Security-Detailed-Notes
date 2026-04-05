@@ -881,9 +881,112 @@ JWT is used for **stateless authentication** — mainly in REST APIs.
 8. No session, no cookie, no server-side state
 ```
 
+
+### JWT AUTHENTICATION FLOW 
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        JWT AUTHENTICATION FLOW                   │
+└─────────────────────────────────────────────────────────────────┘
+
+    CLIENT                    SERVER                    DATABASE
+       │                         │                          │
+       │   1. POST /login         │                          │
+       │   {email, password}      │                          │
+       ├────────────────────────>│                          │
+       │                         │                          │
+       │                         │   2. findByEmail()       │
+       │                         ├─────────────────────────>│
+       │                         │                          │
+       │                         │   3. User Object         │
+       │                         │<─────────────────────────┤
+       │                         │                          │
+       │                         │   4. Verify Password     │
+       │                         │   (BCrypt)               │
+       │                         │                          │
+       │   5. JWT Token           │                          │
+       │<────────────────────────┤                          │
+       │                         │                          │
+       │   6. Store Token         │                          │
+       │   (LocalStorage/Cookie)  │                          │
+       │                         │                          │
+       │   7. GET /api/data       │                          │
+       │   Authorization: Bearer  │                          │
+       ├────────────────────────>│                          │
+       │                         │                          │
+       │                         │   8. Validate JWT        │
+       │                         │   - Check Signature      │
+       │                         │   - Check Expiration     │
+       │                         │   - Extract User         │
+       │                         │                          │
+       │   9. Response Data       │                          │
+       │<────────────────────────┤                          │
+       │                         │                          │
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    JWT TOKEN STRUCTURE                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   HEADER.PAYLOAD.SIGNATURE                                       │
+│                                                                  │
+│   ┌──────────┐ ┌─────────────────┐ ┌──────────────────────┐    │
+│   │ Header   │.│ Payload         │.│ Signature            │    │
+│   ├──────────┤ ├─────────────────┤ ├──────────────────────┤    │
+│   │ Algorithm│ │ User ID         │ │ HMACSHA256(          │    │
+│   │ Token Type│ │ Email           │ │   header + "." +     │    │
+│   └──────────┘ │ Role            │ │   payload,           │    │
+│                │ Issued At        │ │   secret             │    │
+│                │ Expiration       │ │ )                    │    │
+│                └─────────────────┘ └──────────────────────┘    │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+
+
 ### JWT Structure
 
 A JWT has 3 parts separated by dots: `header.payload.signature`
+
+![JWT Token Structure](images\JWT_Token_Structure.png)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                              JWT TOKEN STRUCTURE                                     │
+│                        "The Magic Wristband"                                         │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+    COMPLETE JWT TOKEN:
+    ┌─────────────────────────────────────────────────────────────────────────────┐
+    │  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.                                      │
+    │  eyJzdWIiOiJqb2huQGV4YW1wbGUuY29tIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE2NDAwMDAwMDAs│
+    │  ImV4cCI6MTY0MDA4NjQwMH0.                                                   │
+    │  SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c                                │
+    └─────────────────────────────────────────────────────────────────────────────┘
+    
+    ┌──────────────────┐ ┌────────────────────────┐ ┌─────────────────────────┐
+    │     HEADER       │.│       PAYLOAD          │.│      SIGNATURE          │
+    │  (What type?)    │ │    (Who are you?)      │ │   (Is it real?)         │
+    ├──────────────────┤ ├────────────────────────┤ ├─────────────────────────┤
+    │ {                │ │ {                      │ │ HMACSHA256(             │
+    │   "alg": "HS256",│ │   "sub": "john@ex.com",│ │   base64UrlEncode(header)│
+    │   "typ": "JWT"   │ │   "role": "USER",      │ │   + "." +               │
+    │ }                │ │   "iat": 1640000000,   │ │   base64UrlEncode(payload│
+    │                  │ │   "exp": 1640086400    │ │   ),                    │
+    │                  │ │ }                      │ │   "secret-key"          │
+    │                  │ │                        │ │ )                       │
+    └──────────────────┘ └────────────────────────┘ └─────────────────────────┘
+           │                        │                            │
+           │                        │                            │
+           ▼                        ▼                            ▼
+    ┌──────────────────┐ ┌────────────────────────┐ ┌─────────────────────────┐
+    │ Base64Url encoded│ │ Base64Url encoded      │ │ Used to verify          │
+    │ Result:          │ │ Result:                │ │ token wasn't tampered   │
+    │ eyJhbGciOiJIUzI1 │ │ eyJzdWIiOiJqb2huQGV4   │ │                         │
+    │ NiIsInR5cCI6IkpX │ │ YW1wbGUuY29tIiwicm9s   │ │ Can't be decoded to     │
+    │ VCJ9             │ │ ZSI6IlVTRVIiLCJpYXQiO │ │ original - only verified│
+    └──────────────────┘ └────────────────────────┘ └─────────────────────────┘
+```
 
 ```
 eyJhbGciOiJIUzI1NiJ9     ← Header (algorithm type)
