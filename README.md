@@ -948,7 +948,7 @@ JWT is used for **stateless authentication** — mainly in REST APIs.
 
 A JWT has 3 parts separated by dots: `header.payload.signature`
 
-![JWT Token Structure](images\JWT_Token_Structure.png)
+![JWT Token Structure](images/JWT_Token_Structure.png)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
