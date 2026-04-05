@@ -10,7 +10,7 @@
 
 ---
 
-## 🟢 1. Purpose of Spring Security
+## 🟢 1. Purpose of Spring Security.
 
 1. **Authentication** – Verifying who the user is (login).
 2. **Authorization** – Checking if the user has access to specific resources or actions (roles/permissions).
