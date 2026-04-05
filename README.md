@@ -2169,203 +2169,104 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
 ---
 
-# 🟡 ③ AuthUtil — JWT Utility (With Deep Comments)
+## 25. Quick Revision Cheat Sheet
 
-```java
-@Component
-@Slf4j
-public class AuthUtil {
-
-    @Value("${jwt.secretKey}")
-    private String jwtSecretKey;
-
-    // 🔐 Create HMAC key from secret
-    private SecretKey getSecretKey() {
-        return Keys.hmacShaKeyFor(jwtSecretKey.getBytes(StandardCharsets.UTF_8));
-    }
-
-    // ===============================
-    // 🔐 GENERATE JWT TOKEN
-    // ===============================
-    public String generateAccessToken(User user) {
-
-        return Jwts.builder()
-                .subject(user.getUsername())      // 👤 who is the user
-                .claim("userId", user.getId())    // ➕ custom claim
-                .issuedAt(new Date())             // ⏰ token creation time
-                .expiration(new Date(
-                        System.currentTimeMillis() + 1000 * 60 * 10)) // ⏳ expiry
-                .signWith(getSecretKey())         // 🔐 sign token
-                .compact();
-    }
-
-    // ===============================
-    // 🔍 EXTRACT USERNAME
-    // ===============================
-    public String extractUsername(String token) {
-        return getClaims(token).getSubject();
-    }
-
-    // ===============================
-    // ✅ VALIDATE TOKEN
-    // ===============================
-    public boolean validateToken(String token, UserDetails userDetails) {
-
-        String username = extractUsername(token);
-
-        return username.equals(userDetails.getUsername())
-                && !isTokenExpired(token);
-    }
-
-    // ===============================
-    // 🔎 INTERNAL HELPERS
-    // ===============================
-    private Claims getClaims(String token) {
-        return Jwts.parser()
-                .verifyWith(getSecretKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-    }
-
-    private boolean isTokenExpired(String token) {
-        return getClaims(token).getExpiration().before(new Date());
-    }
-}
 ```
-
-**Code — Extracting a custom claim from the token:**
-
-```java
-// Extract userId from token (custom claim added during generation)
-public Long extractUserId(String token) {
-    Claims claims = getClaims(token);
-    return claims.get("userId", Long.class);
-}
-
-// Extract roles from token
-public List<String> extractRoles(String token) {
-    Claims claims = getClaims(token);
-    return claims.get("roles", List.class);
-}
+┌─────────────────────────────────────────────────────────────────────┐
+│                    SPRING SECURITY CHEAT SHEET                      │
+├─────────────────────────────────────────────────────────────────────┤
+│  DEPENDENCY                                                         │
+│  spring-boot-starter-security                                       │
+├─────────────────────────────────────────────────────────────────────┤
+│  KEY INTERFACES                                                     │
+│  UserDetails         → Represents the logged-in user               │
+│  UserDetailsService  → Loads user from DB by username              │
+│  PasswordEncoder     → Encodes and verifies passwords              │
+│  AuthenticationManager → Entry point for authentication            │
+├─────────────────────────────────────────────────────────────────────┤
+│  AUTHORIZATION EXPRESSIONS                                          │
+│  permitAll()             → Everyone                                │
+│  denyAll()               → No one                                  │
+│  isAuthenticated()       → Logged in users                         │
+│  hasRole("ADMIN")        → Checks for ROLE_ADMIN                   │
+│  hasAuthority("X")       → Checks exact string                     │
+│  hasAnyRole("A","B")     → Any of the roles                        │
+├─────────────────────────────────────────────────────────────────────┤
+│  METHOD SECURITY ANNOTATIONS                                        │
+│  @PreAuthorize("hasRole('ADMIN')")    → Before method              │
+│  @PostAuthorize("returnObject...")    → After method               │
+│  @Secured("ROLE_ADMIN")              → Simple role check           │
+├─────────────────────────────────────────────────────────────────────┤
+│  PASSWORD ENCODER                                                   │
+│  new BCryptPasswordEncoder()                                        │
+│  encoder.encode(rawPassword)         → Hash it                     │
+│  encoder.matches(raw, hashed)        → Verify it                   │
+├─────────────────────────────────────────────────────────────────────┤
+│  JWT WORKFLOW                                                       │
+│  Login → Validate credentials → Generate JWT → Return to client    │
+│  Every Request: Read JWT from Header → Validate → Set Auth         │
+├─────────────────────────────────────────────────────────────────────┤
+│  SESSION POLICY                                                     │
+│  ALWAYS        → Always create session                             │
+│  IF_REQUIRED   → Create if needed (default)                        │
+│  NEVER         → Never create, but use if exists                   │
+│  STATELESS     → Never create or use session (JWT)                 │
+├─────────────────────────────────────────────────────────────────────┤
+│  IMPORTANT CONCEPTS                                                 │
+│  CSRF     → Protect state-changing requests (forms)                │
+│  CORS     → Allow cross-origin requests (frontend ↔ API)           │
+│  Role     → ROLE_ADMIN, ROLE_USER (prefix required)                │
+│  Authority → Fine-grained: READ_USERS, WRITE_PRODUCTS              │
+│  401      → Not authenticated (not logged in)                      │
+│  403      → Not authorized (logged in but no permission)           │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-# 🔴 ④ AuthService — Login & Signup (With Comments)
+## 📌 Common Pitfalls & Tips
 
-```java
-@Service
-@RequiredArgsConstructor
-public class AuthService {
-
-    private final AuthenticationManager authenticationManager;
-    private final AuthUtil authUtil;
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final PatientRepository patientRepository;
-
-    // ===============================
-    // 🔐 LOGIN FLOW
-    // ===============================
-    public LoginResponseDto login(LoginRequestDto request) {
-
-        // 🔥 This triggers Spring Security authentication flow
-        Authentication authentication =
-                authenticationManager.authenticate(
-                        new UsernamePasswordAuthenticationToken(
-                                request.getUsername(),
-                                request.getPassword()));
-
-        // ✅ If credentials correct → principal contains User
-        User user = (User) authentication.getPrincipal();
-
-        // 🎫 Generate JWT
-        String token = authUtil.generateAccessToken(user);
-
-        return new LoginResponseDto(token, user.getId());
-    }
-
-    // ===============================
-    // 🧾 SIGNUP FLOW
-    // ===============================
-    public SignupResponseDto signup(SignUpRequestDto dto) {
-
-        // ❌ Prevent duplicate users
-        if (userRepository.findByUsername(dto.getUsername()).isPresent()) {
-            throw new IllegalArgumentException("User already exists");
-        }
-
-        // 🔐 Encode password before saving
-        User user = User.builder()
-                .username(dto.getUsername())
-                .password(passwordEncoder.encode(dto.getPassword()))
-                .roles(dto.getRoles())
-                .providerType(AuthProviderType.EMAIL)
-                .build();
-
-        user = userRepository.save(user);
-
-        // 👤 Create patient profile
-        Patient patient = Patient.builder()
-                .name(dto.getName())
-                .email(dto.getUsername())
-                .user(user)
-                .build();
-
-        patientRepository.save(patient);
-
-        return new SignupResponseDto(user.getId(), user.getUsername());
-    }
-}
-```
-
-> 🏫 **Analogy — AuthService is the Front Desk:**
-> **Login:** You show your face and PIN (credentials). The front desk calls the HR department (AuthenticationManager) to verify. If OK, they hand you a printed day-pass (JWT).
-> **Signup:** You fill out a new employee form. The desk checks no one else has your name (duplicate check), seals your PIN in a vault (passwordEncoder), saves your details (userRepository), and sets up your workspace (patientRepository).
+| ⚠️ Pitfall | ✅ Fix |
+|---|---|
+| Using plain-text passwords | Always use `BCryptPasswordEncoder` |
+| Disabling CSRF in web apps | Only disable for stateless REST APIs |
+| Returning 401 when user is logged in but denied | 401 = not authenticated, 403 = not authorized |
+| Forgetting `ROLE_` prefix | `hasRole("ADMIN")` auto-adds `ROLE_`. `hasAuthority` requires exact string |
+| Not encoding password during registration | Always call `encoder.encode()` before saving |
+| Using `WebSecurityConfigurerAdapter` | Use `SecurityFilterChain` bean instead (Spring 5.7+) |
+| Extending multiple security configs | Merge into one `SecurityFilterChain` bean |
+| Storing JWT in `localStorage` | Use `httpOnly` cookies for sensitive apps to prevent XSS |
 
 ---
 
-# 🟢 ⑤ Mental Flow (Interview Gold)
-
-## 🔐 Login
+## 🔗 Key Spring Security Classes Summary
 
 ```
-Client → /auth/login
-       → AuthenticationManager
-       → UserDetailsService
-       → PasswordEncoder
-       → JWT generated
-```
+org.springframework.security.core
+  ├── Authentication
+  ├── GrantedAuthority
+  ├── userdetails.UserDetails
+  └── userdetails.UserDetailsService
 
-## 🔐 Secured Request
+org.springframework.security.config.annotation.web.builders
+  └── HttpSecurity
 
-```
-Client → Authorization: Bearer token
-       → JwtAuthFilter
-       → validate token
-       → set SecurityContext
-       → role check
-       → Controller
-```
+org.springframework.security.web
+  └── SecurityFilterChain
 
-> 🏫 **Quick Analogy Summary for Interviews:**
-> - **Authentication** = Showing your ID (who are you?)
-> - **Authorization** = Checking your pass level (what are you allowed to do?)
-> - **JWT** = A tamper-proof badge you carry around
-> - **SecurityContextHolder** = The clipboard in the security office that holds your verified identity for the duration of your visit
-> - **Filter Chain** = The series of security checkpoints you pass through before reaching your destination
-> - **ProviderManager** = The supervisor who assigns your identity check to the right specialist
-> - **BCrypt** = The one-way vault where passwords are stored — you can check if something matches, but can never decode the original
+org.springframework.security.authentication
+  ├── AuthenticationManager
+  ├── UsernamePasswordAuthenticationToken
+  └── dao.DaoAuthenticationProvider
+
+org.springframework.security.crypto.password
+  ├── PasswordEncoder
+  └── bcrypt.BCryptPasswordEncoder
+
+org.springframework.security.core.context
+  └── SecurityContextHolder
+```
 
 ---
 
-> 📌 **Revision Checklist**
-> - [ ] Can you explain the full filter chain flow?
-> - [ ] Can you explain why SecurityContextHolder uses ThreadLocal?
-> - [ ] Can you explain the difference between 401 and 403?
-> - [ ] Can you explain how JWT signature prevents tampering?
-> - [ ] Can you explain why payload is not encrypted?
-> - [ ] Can you draw the Login flow vs Secured Request flow for JWT?
-> - [ ] Can you explain Access Token vs Refresh Token?
-> - [ ] Can you explain why CSRF is disabled in JWT-based apps?
+*📝 These notes are designed for revision and quick reference. Practice by building a small Spring Boot app with login, roles, and a couple of protected endpoints — that's the fastest way to internalize Spring Security!*
