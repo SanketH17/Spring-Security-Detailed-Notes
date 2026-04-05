@@ -256,6 +256,8 @@ ConcurrentSessionFilter → ExceptionTranslationFilter → FilterSecurityInterce
 > 🏫 **Analogy — Post Sorting Office:**
 > FilterChainProxy is like a head postmaster. When mail (requests) arrives, they don't sort it themselves — they assign it to the right department (SecurityFilterChain) based on the address (URL pattern). Each department then passes the mail through its own internal checklist before delivering it.
 
+![Filter Chain Flow Diagram](images/Spring_Security_Filter_Chain.png)
+
 **Diagram:**
 
 ```
