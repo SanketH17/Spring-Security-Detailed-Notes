@@ -4,6 +4,75 @@
 
 ---
 
+## 📑 Index
+
+1. **[Overview of Spring Security](#overview-of-spring-security)**
+        - [Purpose of Spring Security](#1-purpose-of-spring-security)
+        - [Key Concepts](#2-key-concepts)
+        - [Components](#3-components)
+        - [How It Works (High-Level Flow)](#4-how-it-works-high-level-flow)
+        - [Advantages of Spring Security](#5-advantages-of-spring-security)
+        - [Common Use Cases](#6-common-use-cases)
+
+2. **[Spring Security Authentication Flow](#spring-security-authentication-flow)**
+        - [Step 1 – Client Sends Login Request](#step-1--client-sends-login-request)
+        - [Step 2 – FilterChainProxy & Security Filter Chain](#step-2--filterchainproxy--security-filter-chain)
+        - [Step 3 – UsernamePasswordAuthenticationFilter](#step-3--usernamepasswordauthenticationfilter)
+        - [Step 4 – AuthenticationManager (ProviderManager)](#step-4--authenticationmanager-providermanager)
+        - [Step 5 – DaoAuthenticationProvider](#step-5--daoauthenticationprovider)
+        - [Step 6 – SecurityContextHolder](#step-6--securitycontextholder)
+        - [Step 7 – DispatcherServlet → Controller](#step-7--dispatcherservlet--controller)
+        - [Step 8 – Optional In-Memory Authentication](#step-8--optional-in-memory-authentication)
+        - [Advanced Design Insights](#advanced-design-insights)
+        - [Complete Flow Diagram (Expert Level)](#complete-flow-diagram-expert-level)
+        - [Expert-Level Spring Security Flow Diagram](#expert-level-spring-security-flow-diagram)
+        - [Key Features in the Diagram for Experienced Developers](#key-features-in-the-diagram-for-experienced-developers)
+        - [Optional: Visual Representation (ASCII + Flow Arrows)](#optional-visual-representation-ascii--flow-arrows)
+
+3. **[JWT Foundations and Core Flow](#what-is-jwt-json-web-token)**
+        - [What is JWT (JSON Web Token)?](#what-is-jwt-json-web-token)
+        - [Structure of JWT (3 Parts)](#structure-of-jwt-3-parts)
+        - [JWT Part 1 – Header](#jwt-part-1--header)
+        - [JWT Part 2 – Payload](#jwt-part-2--payload)
+        - [JWT Part 3 – Signature](#jwt-part-3--signature)
+        - [Visual JWT Creation Flow](#visual-jwt-creation-flow)
+        - [JWT Authentication Flow (Client-Server)](#jwt-authentication-flow-client-server)
+            - [Step 1 – Client Sends Credentials](#step-1--client-sends-credentials)
+            - [Step 2 – Server Validates Credentials](#step-2--server-validates-credentials)
+            - [Step 3 – Server Generates JWT](#step-3--server-generates-jwt)
+            - [Step 4 – Client Uses Token](#step-4--client-uses-token)
+            - [Step 5 – Server Validates Token](#step-5--server-validates-token)
+        - [JWT Validation Flow (Important)](#jwt-validation-flow-important)
+        - [Access Token + Refresh Token Flow](#access-token--refresh-token-flow)
+        - [Stateless Nature of JWT](#stateless-nature-of-jwt)
+        - [Spring Security + JWT Flow](#spring-security--jwt-flow)
+        - [Complete JWT System Diagram](#complete-jwt-system-diagram)
+        - [Important Security Notes (Professional Level)](#important-security-notes-professional-level)
+
+4. **[Complete JWT Authentication in Spring Security](#complete-jwt-authentication-flow-in-spring-security-beginner-to-advanced-understanding)**
+        - [Complete JWT Authentication Flow in Spring Security (Beginner to Advanced Understanding)](#complete-jwt-authentication-flow-in-spring-security-beginner-to-advanced-understanding)
+        - [Two Types of Requests in JWT System](#two-types-of-requests-in-jwt-system)
+        - [Step 1 – Login Request Flow (`/login`)](#step-1--login-request-flow-login)
+        - [AuthenticationManager During Login](#authenticationmanager-during-login)
+        - [Step 2 – Secured API Request Flow (With JWT)](#step-2--secured-api-request-flow-with-jwt)
+        - [JwtAuthFilter – The Heart of JWT Authentication](#jwtauthfilter--the-heart-of-jwt-authentication)
+        - [Why SecurityContextHolder Is Important Here?](#why-securitycontextholder-is-important-here)
+        - [UsernamePasswordAuthenticationFilter in JWT Flow](#usernamepasswordauthenticationfilter-in-jwt-flow)
+        - [JWT Service Example (Token Generation & Validation)](#jwt-service-example-token-generation--validation)
+        - [Why JWT Is Stateless?](#why-jwt-is-stateless)
+        - [Complete JWT Flow from Your Diagram (Connected Version)](#complete-jwt-flow-from-your-diagram-connected-version)
+
+5. **[JWT-Only Security (Interview Ready)](#jwt-only-security--improved-notes-with-detailed-comments-interview-ready)**
+        - [WebSecurityConfig — Security Brain (With Comments)](#websecurityconfig--security-brain-with-comments)
+        - [JwtAuthFilter — Heart of JWT Authentication](#jwtauthfilter--heart-of-jwt-authentication)
+        - [AuthUtil — JWT Utility (With Deep Comments)](#authutil--jwt-utility-with-deep-comments)
+        - [AuthService — Login & Signup (With Comments)](#authservice--login--signup-with-comments)
+        - [Mental Flow (Interview Gold)](#mental-flow-interview-gold)
+            - [Login](#login)
+            - [Secured Request](#secured-request)
+
+---
+
 # 🔵 Overview of Spring Security
 
 **Spring Security** is a **powerful and highly customizable framework** for **authentication, authorization, and security management** in Java applications, especially Spring-based applications. It provides a complete **security infrastructure** for web and method-level security.
