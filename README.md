@@ -261,10 +261,7 @@ Response
 
 ## Spring Security Internal Flow Diagram
 
-<!-- add image -->
-
-
-![Spring Security Internal Flow](images\spring_security_internal_flow.png)
+![Spring Security Internal Flow](images/spring_security_internal_flow.png)
 
 ---
 
