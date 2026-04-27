@@ -15,6 +15,7 @@
    - [Common Use Cases](#6-common-use-cases)
 
 2. **[Spring Security Authentication Flow](#spring-security-authentication-flow)**
+    - [Spring Security Internal Flow Diagram](#spring-security-internal-flow-diagram)
    - [Step 1 – Client Sends Login Request](#step-1--client-sends-login-request)
    - [Step 2 – FilterChainProxy & Security Filter Chain](#step-2--filterchainproxy--security-filter-chain)
    - [Step 3 – UsernamePasswordAuthenticationFilter](#step-3--usernamepasswordauthenticationfilter)
@@ -257,6 +258,10 @@ Controller
 Response
 
 ```
+
+## Spring Security Internal Flow Diagram
+
+![Spring Security Internal Flow](images/spring_security_internal_flow.png)
 
 ---
 
